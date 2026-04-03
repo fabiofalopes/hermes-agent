@@ -7380,6 +7380,61 @@ class AIAgent:
                     # compress history and retry, not abort immediately.
                     status_code = getattr(api_error, "status_code", None)
 
+                    # ── Anthropic Sonnet long-context tier gate ───────────
+                    # Anthropic returns HTTP 429 "Extra usage is required for
+                    # long context requests" when a Claude Max (or similar)
+                    # subscription doesn't include the 1M-context tier.  This
+                    # is NOT a transient rate limit — retrying or switching
+                    # credentials won't help.  Reduce context to 200k (the
+                    # standard tier) and compress.
+                    # Only applies to Sonnet — Opus 1M is general access.
+                    _is_long_context_tier_error = (
+                        status_code == 429
+                        and "extra usage" in error_msg
+                        and "long context" in error_msg
+                        and "sonnet" in self.model.lower()
+                    )
+                    if _is_long_context_tier_error:
+                        _reduced_ctx = 200000
+                        compressor = self.context_compressor
+                        old_ctx = compressor.context_length
+                        if old_ctx > _reduced_ctx:
+                            compressor.context_length = _reduced_ctx
+                            compressor.threshold_tokens = int(
+                                _reduced_ctx * compressor.threshold_percent
+                            )
+                            compressor._context_probed = True
+                            # Don't persist — this is a subscription-tier
+                            # limitation, not a model capability.  If the user
+                            # later enables extra usage the 1M limit should
+                            # come back automatically.
+                            compressor._context_probe_persistable = False
+                            self._vprint(
+                                f"{self.log_prefix}⚠️  Anthropic long-context tier "
+                                f"requires extra usage — reducing context: "
+                                f"{old_ctx:,} → {_reduced_ctx:,} tokens",
+                                force=True,
+                            )
+
+                        compression_attempts += 1
+                        if compression_attempts <= max_compression_attempts:
+                            original_len = len(messages)
+                            messages, active_system_prompt = self._compress_context(
+                                messages, system_message,
+                                approx_tokens=approx_tokens,
+                                task_id=effective_task_id,
+                            )
+                            if len(messages) < original_len or old_ctx > _reduced_ctx:
+                                self._emit_status(
+                                    f"🗜️ Context reduced to {_reduced_ctx:,} tokens "
+                                    f"(was {old_ctx:,}), retrying..."
+                                )
+                                time.sleep(2)
+                                restart_with_compressed_messages = True
+                                break
+                        # Fall through to normal error handling if compression
+                        # is exhausted or didn't help.
+
                     # Eager fallback for rate-limit errors (429 or quota exhaustion).
                     # When a fallback model is configured, switch immediately instead
                     # of burning through retries with exponential backoff -- the
@@ -7485,7 +7540,33 @@ class AIAgent:
                                 f"treating as probable context overflow.",
                                 force=True,
                             )
-                    
+
+                    # Server disconnects on large sessions are often caused by
+                    # the request exceeding the provider's context/payload limit
+                    # without a proper HTTP error response.  Treat these as
+                    # context-length errors to trigger compression rather than
+                    # burning through retries that will all fail the same way.
+                    # This breaks the death spiral: disconnect → no token data
+                    # → no compression → bigger session → more disconnects.
+                    # (#2153)
+                    if not is_context_length_error and not status_code:
+                        _is_server_disconnect = (
+                            'server disconnected' in error_msg
+                            or 'peer closed connection' in error_msg
+                            or error_type in ('ReadError', 'RemoteProtocolError', 'ServerDisconnectedError')
+                        )
+                        if _is_server_disconnect:
+                            ctx_len = getattr(getattr(self, 'context_compressor', None), 'context_length', 200000)
+                            _is_large = approx_tokens > ctx_len * 0.6 or len(api_messages) > 200
+                            if _is_large:
+                                is_context_length_error = True
+                                self._vprint(
+                                    f"{self.log_prefix}⚠️  Server disconnected with large session "
+                                    f"(~{approx_tokens:,} tokens, {len(api_messages)} msgs) — "
+                                    f"treating as context-length error, attempting compression.",
+                                    force=True,
+                                )
+
                     if is_context_length_error:
                         compressor = self.context_compressor
                         old_ctx = compressor.context_length
@@ -8120,11 +8201,20 @@ class AIAgent:
                     # threshold (default 50%) leaves ample headroom; if tool
                     # results push past it, the next API call will report the
                     # real total and trigger compression then.
+                    #
+                    # If last_prompt_tokens is 0 (stale after API disconnect
+                    # or provider returned no usage data), fall back to rough
+                    # estimate to avoid missing compression.  Without this,
+                    # a session can grow unbounded after disconnects because
+                    # should_compress(0) never fires.  (#2153)
                     _compressor = self.context_compressor
-                    _real_tokens = (
-                        _compressor.last_prompt_tokens
-                        + _compressor.last_completion_tokens
-                    )
+                    if _compressor.last_prompt_tokens > 0:
+                        _real_tokens = (
+                            _compressor.last_prompt_tokens
+                            + _compressor.last_completion_tokens
+                        )
+                    else:
+                        _real_tokens = estimate_messages_tokens_rough(messages)
 
                     # ── Context pressure warnings (user-facing only) ──────────
                     # Notify the user (NOT the LLM) as context approaches the
