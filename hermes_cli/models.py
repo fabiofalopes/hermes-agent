@@ -26,34 +26,34 @@ GITHUB_MODELS_CATALOG_URL = COPILOT_MODELS_URL
 
 # (model_id, display description shown in menus)
 OPENROUTER_MODELS: list[tuple[str, str]] = [
-    ("anthropic/claude-opus-4.6",       "recommended"),
-    ("anthropic/claude-sonnet-4.6",     ""),
+    ("anthropic/claude-opus-4.6", "recommended"),
+    ("anthropic/claude-sonnet-4.6", ""),
     ("qwen/qwen3.6-plus:free", "free"),
-    ("anthropic/claude-sonnet-4.5",     ""),
-    ("anthropic/claude-haiku-4.5",      ""),
-    ("openai/gpt-5.4",                  ""),
-    ("openai/gpt-5.4-mini",             ""),
-    ("xiaomi/mimo-v2-pro",               ""),
-    ("openai/gpt-5.3-codex",            ""),
-    ("google/gemini-3-pro-preview",     ""),
-    ("google/gemini-3-flash-preview",   ""),
-    ("google/gemini-3.1-pro-preview",     ""),
-    ("google/gemini-3.1-flash-lite-preview",   ""),
-    ("qwen/qwen3.5-plus-02-15",         ""),
-    ("qwen/qwen3.5-35b-a3b",            ""),
-    ("stepfun/step-3.5-flash",          ""),
-    ("minimax/minimax-m2.7",            ""),
-    ("minimax/minimax-m2.5",            ""),
-    ("z-ai/glm-5",                      ""),
-    ("z-ai/glm-5-turbo",                ""),
-    ("moonshotai/kimi-k2.5",            ""),
-    ("x-ai/grok-4.20-beta",             ""),
-    ("nvidia/nemotron-3-super-120b-a12b",      ""),
+    ("anthropic/claude-sonnet-4.5", ""),
+    ("anthropic/claude-haiku-4.5", ""),
+    ("openai/gpt-5.4", ""),
+    ("openai/gpt-5.4-mini", ""),
+    ("xiaomi/mimo-v2-pro", ""),
+    ("openai/gpt-5.3-codex", ""),
+    ("google/gemini-3-pro-preview", ""),
+    ("google/gemini-3-flash-preview", ""),
+    ("google/gemini-3.1-pro-preview", ""),
+    ("google/gemini-3.1-flash-lite-preview", ""),
+    ("qwen/qwen3.5-plus-02-15", ""),
+    ("qwen/qwen3.5-35b-a3b", ""),
+    ("stepfun/step-3.5-flash", ""),
+    ("minimax/minimax-m2.7", ""),
+    ("minimax/minimax-m2.5", ""),
+    ("z-ai/glm-5", ""),
+    ("z-ai/glm-5-turbo", ""),
+    ("moonshotai/kimi-k2.5", ""),
+    ("x-ai/grok-4.20-beta", ""),
+    ("nvidia/nemotron-3-super-120b-a12b", ""),
     ("nvidia/nemotron-3-super-120b-a12b:free", "free"),
     ("arcee-ai/trinity-large-preview:free", "free"),
-    ("arcee-ai/trinity-large-thinking",  ""),
-    ("openai/gpt-5.4-pro",              ""),
-    ("openai/gpt-5.4-nano",             ""),
+    ("arcee-ai/trinity-large-thinking", ""),
+    ("openai/gpt-5.4-pro", ""),
+    ("openai/gpt-5.4-nano", ""),
 ]
 
 _PROVIDER_MODELS: dict[str, list[str]] = {
@@ -252,6 +252,16 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "XiaomiMiMo/MiMo-V2-Flash",
         "moonshotai/Kimi-K2-Thinking",
     ],
+    # Google AI Studio — free tier models with OpenAI-compatible API.
+    # Rate limits (free): Gemma 4 = 15 RPM, 1.5K RPD; Gemma 3 = 30 RPM, 14.4K RPD.
+    "google-ai-studio": [
+        "gemma-4-31b-it",
+        "gemma-4-26b-it",
+        "gemma-3-27b-it",
+        "gemma-3-12b-it",
+        "gemma-3-4b-it",
+        "gemma-3-1b-it",
+    ],
 }
 
 _PROVIDER_LABELS = {
@@ -272,6 +282,7 @@ _PROVIDER_LABELS = {
     "kilocode": "Kilo Code",
     "alibaba": "Alibaba Cloud (DashScope)",
     "huggingface": "Hugging Face",
+    "google-ai-studio": "Google AI Studio",
     "custom": "Custom endpoint",
 }
 
@@ -310,6 +321,11 @@ _PROVIDER_ALIASES = {
     "hf": "huggingface",
     "hugging-face": "huggingface",
     "huggingface-hub": "huggingface",
+    "google": "google-ai-studio",
+    "googleai": "google-ai-studio",
+    "google-ai": "google-ai-studio",
+    "aistudio": "google-ai-studio",
+    "gemma": "google-ai-studio",
 }
 
 
@@ -421,26 +437,40 @@ def format_model_pricing_table(
         max((len(r[2]) for r in rows if r[2]), default=4),
         3,  # minimum: "In" / "Out" header
     )
-    cache_col = max(
-        max((len(r[3]) for r in rows if r[3]), default=4),
-        5,  # minimum: "Cache" header
-    ) if has_cache else 0
+    cache_col = (
+        max(
+            max((len(r[3]) for r in rows if r[3]), default=4),
+            5,  # minimum: "Cache" header
+        )
+        if has_cache
+        else 0
+    )
     lines: list[str] = []
 
     # Header
     if has_cache:
-        lines.append(f"{indent}{'Model':<{name_col}} {'In':>{price_col}}  {'Out':>{price_col}}  {'Cache':>{cache_col}}  /Mtok")
-        lines.append(f"{indent}{'-' * name_col} {'-' * price_col}  {'-' * price_col}  {'-' * cache_col}")
+        lines.append(
+            f"{indent}{'Model':<{name_col}} {'In':>{price_col}}  {'Out':>{price_col}}  {'Cache':>{cache_col}}  /Mtok"
+        )
+        lines.append(
+            f"{indent}{'-' * name_col} {'-' * price_col}  {'-' * price_col}  {'-' * cache_col}"
+        )
     else:
-        lines.append(f"{indent}{'Model':<{name_col}} {'In':>{price_col}}  {'Out':>{price_col}}  /Mtok")
+        lines.append(
+            f"{indent}{'Model':<{name_col}} {'In':>{price_col}}  {'Out':>{price_col}}  /Mtok"
+        )
         lines.append(f"{indent}{'-' * name_col} {'-' * price_col}  {'-' * price_col}")
 
     for mid, inp, out, cache, is_cur in rows:
         marker = "  ← current" if is_cur else ""
         if has_cache:
-            lines.append(f"{indent}{mid:<{name_col}} {inp:>{price_col}}  {out:>{price_col}}  {cache:>{cache_col}}{marker}")
+            lines.append(
+                f"{indent}{mid:<{name_col}} {inp:>{price_col}}  {out:>{price_col}}  {cache:>{cache_col}}{marker}"
+            )
         else:
-            lines.append(f"{indent}{mid:<{name_col}} {inp:>{price_col}}  {out:>{price_col}}{marker}")
+            lines.append(
+                f"{indent}{mid:<{name_col}} {inp:>{price_col}}  {out:>{price_col}}{marker}"
+            )
 
     return lines
 
@@ -502,6 +532,7 @@ def _resolve_nous_pricing_credentials() -> tuple[str, str]:
     """Return ``(api_key, base_url)`` for Nous Portal pricing, or empty strings."""
     try:
         from hermes_cli.auth import resolve_nous_runtime_credentials
+
         creds = resolve_nous_runtime_credentials()
         if creds:
             return (creds.get("api_key", ""), creds.get("base_url", ""))
@@ -549,10 +580,24 @@ def list_available_providers() -> list[dict[str, str]]:
     """
     # Canonical providers in display order
     _PROVIDER_ORDER = [
-        "openrouter", "nous", "openai-codex", "copilot", "copilot-acp",
-        "huggingface", "zai", "kimi-coding", "minimax", "minimax-cn", "kilocode", "anthropic", "alibaba",
-        "opencode-zen", "opencode-go",
-        "ai-gateway", "deepseek", "custom",
+        "openrouter",
+        "nous",
+        "openai-codex",
+        "copilot",
+        "copilot-acp",
+        "huggingface",
+        "zai",
+        "kimi-coding",
+        "minimax",
+        "minimax-cn",
+        "kilocode",
+        "anthropic",
+        "alibaba",
+        "opencode-zen",
+        "opencode-go",
+        "ai-gateway",
+        "deepseek",
+        "custom",
     ]
     # Build reverse alias map
     aliases_for: dict[str, list[str]] = {}
@@ -567,6 +612,7 @@ def list_available_providers() -> list[dict[str, str]]:
         has_creds = False
         try:
             from hermes_cli.auth import get_auth_status, has_usable_secret
+
             if pid == "custom":
                 custom_base_url = _get_custom_base_url() or ""
                 has_creds = bool(custom_base_url.strip())
@@ -577,12 +623,14 @@ def list_available_providers() -> list[dict[str, str]]:
                 has_creds = bool(status.get("logged_in") or status.get("configured"))
         except Exception:
             pass
-        result.append({
-            "id": pid,
-            "label": label,
-            "aliases": alias_list,
-            "authenticated": has_creds,
-        })
+        result.append(
+            {
+                "id": pid,
+                "label": label,
+                "aliases": alias_list,
+                "authenticated": has_creds,
+            }
+        )
     return result
 
 
@@ -607,7 +655,7 @@ def parse_model_input(raw: str, current_provider: str) -> tuple[str, str]:
     colon = stripped.find(":")
     if colon > 0:
         provider_part = stripped[:colon].strip().lower()
-        model_part = stripped[colon + 1:].strip()
+        model_part = stripped[colon + 1 :].strip()
         if provider_part and model_part and provider_part in _KNOWN_PROVIDER_NAMES:
             # Support custom:name:model triple syntax for named custom
             # providers.  ``custom:local:qwen`` → ("custom:local", "qwen").
@@ -615,7 +663,7 @@ def parse_model_input(raw: str, current_provider: str) -> tuple[str, str]:
             if provider_part == "custom" and ":" in model_part:
                 second_colon = model_part.find(":")
                 custom_name = model_part[:second_colon].strip()
-                actual_model = model_part[second_colon + 1:].strip()
+                actual_model = model_part[second_colon + 1 :].strip()
                 if custom_name and actual_model:
                     return (f"custom:{custom_name}", actual_model)
             return (normalize_provider(provider_part), model_part)
@@ -626,6 +674,7 @@ def _get_custom_base_url() -> str:
     """Get the custom endpoint base_url from config.yaml."""
     try:
         from hermes_cli.config import load_config
+
         config = load_config()
         model_cfg = config.get("model", {})
         if isinstance(model_cfg, dict):
@@ -715,9 +764,11 @@ def detect_provider_for_model(
         has_creds = False
         try:
             from hermes_cli.auth import PROVIDER_REGISTRY
+
             pconfig = PROVIDER_REGISTRY.get(direct_match)
             if pconfig:
                 import os
+
                 for env_var in pconfig.api_key_env_vars:
                     if os.getenv(env_var, "").strip():
                         has_creds = True
@@ -834,10 +885,17 @@ def provider_model_ids(provider: Optional[str]) -> list[str]:
     if normalized == "nous":
         # Try live Nous Portal /models endpoint
         try:
-            from hermes_cli.auth import fetch_nous_models, resolve_nous_runtime_credentials
+            from hermes_cli.auth import (
+                fetch_nous_models,
+                resolve_nous_runtime_credentials,
+            )
+
             creds = resolve_nous_runtime_credentials()
             if creds:
-                live = fetch_nous_models(api_key=creds.get("api_key", ""), inference_base_url=creds.get("base_url", ""))
+                live = fetch_nous_models(
+                    api_key=creds.get("api_key", ""),
+                    inference_base_url=creds.get("base_url", ""),
+                )
                 if live:
                     return live
         except Exception:
@@ -884,6 +942,7 @@ def _fetch_anthropic_models(timeout: float = 5.0) -> Optional[list[str]]:
     if _is_oauth_token(token):
         headers["Authorization"] = f"Bearer {token}"
         from agent.anthropic_adapter import _COMMON_BETAS, _OAUTH_ONLY_BETAS
+
         headers["anthropic-beta"] = ",".join(_COMMON_BETAS + _OAUTH_ONLY_BETAS)
     else:
         headers["x-api-key"] = token
@@ -897,14 +956,18 @@ def _fetch_anthropic_models(timeout: float = 5.0) -> Optional[list[str]]:
             data = json.loads(resp.read().decode())
             models = [m["id"] for m in data.get("data", []) if m.get("id")]
             # Sort: latest/largest first (opus > sonnet > haiku, higher version first)
-            return sorted(models, key=lambda m: (
-                "opus" not in m,      # opus first
-                "sonnet" not in m,    # then sonnet
-                "haiku" not in m,     # then haiku
-                m,                    # alphabetical within tier
-            ))
+            return sorted(
+                models,
+                key=lambda m: (
+                    "opus" not in m,  # opus first
+                    "sonnet" not in m,  # then sonnet
+                    "haiku" not in m,  # then haiku
+                    m,  # alphabetical within tier
+                ),
+            )
     except Exception as e:
         import logging
+
         logging.getLogger(__name__).debug("Failed to fetch Anthropic models: %s", e)
         return None
 
@@ -931,6 +994,7 @@ def copilot_default_headers() -> dict[str, str]:
     """
     try:
         from hermes_cli.copilot_auth import copilot_request_headers
+
         return copilot_request_headers(is_agent_turn=True)
     except ImportError:
         return {
@@ -976,10 +1040,12 @@ def fetch_github_model_catalog(
     """Fetch the live GitHub Copilot model catalog for this account."""
     attempts: list[dict[str, str]] = []
     if api_key:
-        attempts.append({
-            **copilot_default_headers(),
-            "Authorization": f"Bearer {api_key}",
-        })
+        attempts.append(
+            {
+                **copilot_default_headers(),
+                "Authorization": f"Bearer {api_key}",
+            }
+        )
     attempts.append(copilot_default_headers())
 
     for headers in attempts:
@@ -1007,13 +1073,14 @@ def fetch_github_model_catalog(
 
 def _is_github_models_base_url(base_url: Optional[str]) -> bool:
     normalized = (base_url or "").strip().rstrip("/").lower()
-    return (
-        normalized.startswith(COPILOT_BASE_URL)
-        or normalized.startswith("https://models.github.ai/inference")
+    return normalized.startswith(COPILOT_BASE_URL) or normalized.startswith(
+        "https://models.github.ai/inference"
     )
 
 
-def _fetch_github_models(api_key: Optional[str] = None, timeout: float = 5.0) -> Optional[list[str]]:
+def _fetch_github_models(
+    api_key: Optional[str] = None, timeout: float = 5.0
+) -> Optional[list[str]]:
     catalog = fetch_github_model_catalog(api_key=api_key, timeout=timeout)
     if not catalog:
         return None
@@ -1151,7 +1218,9 @@ def copilot_model_api_mode(
         catalog = fetch_github_model_catalog(api_key=api_key)
 
     if catalog:
-        catalog_entry = next((item for item in catalog if item.get("id") == normalized), None)
+        catalog_entry = next(
+            (item for item in catalog if item.get("id") == normalized), None
+        )
         if isinstance(catalog_entry, dict):
             supported_endpoints = {
                 str(endpoint).strip()
@@ -1159,13 +1228,18 @@ def copilot_model_api_mode(
                 if str(endpoint).strip()
             }
             # For non-GPT-5 models, check if they only support messages API
-            if "/v1/messages" in supported_endpoints and "/chat/completions" not in supported_endpoints:
+            if (
+                "/v1/messages" in supported_endpoints
+                and "/chat/completions" not in supported_endpoints
+            ):
                 return "anthropic_messages"
 
     return "chat_completions"
 
 
-def normalize_opencode_model_id(provider_id: Optional[str], model_id: Optional[str]) -> str:
+def normalize_opencode_model_id(
+    provider_id: Optional[str], model_id: Optional[str]
+) -> str:
     """Normalize OpenCode config IDs to the bare model slug used in API requests."""
     provider = normalize_provider(provider_id)
     current = str(model_id or "").strip()
@@ -1174,7 +1248,7 @@ def normalize_opencode_model_id(provider_id: Optional[str], model_id: Optional[s
 
     prefix = f"{provider}/"
     if current.lower().startswith(prefix):
-        return current[len(prefix):]
+        return current[len(prefix) :]
     return current
 
 
@@ -1225,11 +1299,15 @@ def github_model_reasoning_efforts(
 
     catalog_entry = None
     if catalog is not None:
-        catalog_entry = next((item for item in catalog if item.get("id") == normalized), None)
+        catalog_entry = next(
+            (item for item in catalog if item.get("id") == normalized), None
+        )
     elif api_key:
         fetched_catalog = fetch_github_model_catalog(api_key=api_key)
         if fetched_catalog:
-            catalog_entry = next((item for item in fetched_catalog if item.get("id") == normalized), None)
+            catalog_entry = next(
+                (item for item in fetched_catalog if item.get("id") == normalized), None
+            )
 
     if catalog_entry is not None:
         capabilities = catalog_entry.get("capabilities")
@@ -1309,7 +1387,9 @@ def probe_api_models(
                     "models": [m.get("id", "") for m in data.get("data", [])],
                     "probed_url": url,
                     "resolved_base_url": candidate_base.rstrip("/"),
-                    "suggested_base_url": alternate_base if alternate_base != candidate_base else normalized,
+                    "suggested_base_url": alternate_base
+                    if alternate_base != candidate_base
+                    else normalized,
                     "used_fallback": is_fallback,
                 }
         except Exception:
@@ -1332,6 +1412,7 @@ def _fetch_ai_gateway_models(timeout: float = 5.0) -> Optional[list[str]]:
     base_url = os.getenv("AI_GATEWAY_BASE_URL", "").strip()
     if not base_url:
         from hermes_constants import AI_GATEWAY_BASE_URL
+
         base_url = AI_GATEWAY_BASE_URL
 
     url = base_url.rstrip("/") + "/models"
@@ -1389,10 +1470,13 @@ def validate_requested_model(
         normalized = "custom"
     requested_for_lookup = requested
     if normalized == "copilot":
-        requested_for_lookup = normalize_copilot_model_id(
-            requested,
-            api_key=api_key,
-        ) or requested
+        requested_for_lookup = (
+            normalize_copilot_model_id(
+                requested,
+                api_key=api_key,
+            )
+            or requested
+        )
 
     if not requested:
         return {
@@ -1425,7 +1509,9 @@ def validate_requested_model(
             suggestions = get_close_matches(requested, api_models, n=3, cutoff=0.5)
             suggestion_text = ""
             if suggestions:
-                suggestion_text = "\n  Similar models: " + ", ".join(f"`{s}`" for s in suggestions)
+                suggestion_text = "\n  Similar models: " + ", ".join(
+                    f"`{s}`" for s in suggestions
+                )
 
             message = (
                 f"Note: `{requested}` was not found in this custom endpoint's model listing "
@@ -1479,7 +1565,9 @@ def validate_requested_model(
             suggestions = get_close_matches(requested, api_models, n=3, cutoff=0.5)
             suggestion_text = ""
             if suggestions:
-                suggestion_text = "\n  Similar models: " + ", ".join(f"`{s}`" for s in suggestions)
+                suggestion_text = "\n  Similar models: " + ", ".join(
+                    f"`{s}`" for s in suggestions
+                )
 
             return {
                 "accepted": True,
