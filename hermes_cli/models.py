@@ -839,7 +839,54 @@ _PROVIDER_ALIASES = {
     "gmicloud": "gmi",
     "minimax-china": "minimax-cn",
     "minimax_cn": "minimax-cn",
-    "minimax-china": "minimax-cn",
+    "minimax-portal": "minimax-oauth",
+    "minimax-global": "minimax-oauth",
+    "minimax_oauth": "minimax-oauth",
+    "claude": "anthropic",
+    "claude-code": "anthropic",
+    "deep-seek": "deepseek",
+    "opencode": "opencode-zen",
+    "zen": "opencode-zen",
+    "go": "opencode-go",
+    "opencode-go-sub": "opencode-go",
+    "aigateway": "ai-gateway",
+    "vercel": "ai-gateway",
+    "vercel-ai-gateway": "ai-gateway",
+    "kilo": "kilocode",
+    "kilo-code": "kilocode",
+    "kilo-gateway": "kilocode",
+    "dashscope": "alibaba",
+    "aliyun": "alibaba",
+    "qwen": "alibaba",
+    "alibaba-cloud": "alibaba",
+    "qwen-portal": "qwen-oauth",
+    "gemini-cli": "google-gemini-cli",
+    "gemini-oauth": "google-gemini-cli",
+    "hf": "huggingface",
+    "hugging-face": "huggingface",
+    "huggingface-hub": "huggingface",
+    "mimo": "xiaomi",
+    "xiaomi-mimo": "xiaomi",
+    "tencent": "tencent-tokenhub",
+    "tokenhub": "tencent-tokenhub",
+    "tencent-cloud": "tencent-tokenhub",
+    "tencentmaas": "tencent-tokenhub",
+    "aws": "bedrock",
+    "aws-bedrock": "bedrock",
+    "amazon-bedrock": "bedrock",
+    "amazon": "bedrock",
+    "grok": "xai",
+    "x-ai": "xai",
+    "x.ai": "xai",
+    "nim": "nvidia",
+    "nvidia-nim": "nvidia",
+    "build-nvidia": "nvidia",
+    "nemotron": "nvidia",
+    "lmstudio": "lmstudio",
+    "lm-studio": "lmstudio",
+    "lm_studio": "lmstudio",
+    "ollama": "custom",  # bare "ollama" = local; use "ollama-cloud" for cloud
+    "ollama_cloud": "ollama-cloud",
     "modelos": "modelos",
     "modelos.ai": "modelos",
 }
@@ -1970,6 +2017,12 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
                 return ids
         except Exception:
             pass
+    if normalized == "modelos":
+        api_key = os.getenv("MODELOS_AI_KEY", "").strip()
+        if api_key:
+            live = fetch_api_models(api_key, "https://modelos.ai.ulusofona.pt/v1")
+            if live:
+                return live
     curated_static = list(_PROVIDER_MODELS.get(normalized, []))
     if normalized in _MODELS_DEV_PREFERRED:
         return _merge_with_models_dev(normalized, curated_static)

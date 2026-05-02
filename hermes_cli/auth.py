@@ -420,6 +420,7 @@ PROVIDER_REGISTRY: Dict[str, ProviderConfig] = {
         auth_type="api_key",
         inference_base_url="https://modelos.ai.ulusofona.pt/v1",
         api_key_env_vars=("MODELOS_AI_KEY",),
+        base_url_env_var="MODELOS_AI_BASE_URL",
     ),
 }
 
@@ -1198,9 +1199,10 @@ def resolve_provider(
         "kilo": "kilocode", "kilo-code": "kilocode", "kilo-gateway": "kilocode",
         "lmstudio": "lmstudio", "lm-studio": "lmstudio", "lm_studio": "lmstudio",
         # Local server aliases — route through the generic custom provider
-        "ollama": "custom", "ollama_cloud": "ollama-cloud",
+        "ollama": "custom", "ollama-cloud": "ollama-cloud",
         "vllm": "custom", "llamacpp": "custom",
         "llama.cpp": "custom", "llama-cpp": "custom",
+        "modelos": "modelos", "modelos.ai": "modelos",
     }
     normalized = _PROVIDER_ALIASES.get(normalized, normalized)
 

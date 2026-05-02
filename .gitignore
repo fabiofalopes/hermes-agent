@@ -76,3 +76,14 @@ models-dev-upstream/
 *.deb
 .sisyphus/
 hermes-update.sh
+
+# Credential / config files (belong in ~/.hermes/, not repo)
+auth.json
+config.yaml
+twikit_cookies.json
+cookies.json
+local_storage.json
+*.secret
+secrets.json
+credentials.json
+vault-keeper/
