@@ -2,6 +2,69 @@
 
 Instructions for AI coding assistants and developers working on the hermes-agent codebase.
 
+## Repository Architecture: Overlay, NOT Fork
+
+This repo tracks `NousResearch/hermes-agent` upstream directly. We maintain
+a **clean overlay** — upstream code plus minimal local patches — NOT a fork.
+
+**CRITICAL: The only custom modification is the Modelos AI provider.**
+Everything else (voice transcription, STT enrichment, auxiliary overrides,
+reasoning_content preservation) is now handled natively by upstream v0.12+.
+
+```
+ ~/.hermes/hermes-agent/     ← GIT REPO (upstream + tiny overlay)
+                                  git reset --hard upstream/main on every update
+                                  NOTHING personal survives here between updates
+
+ ~/.hermes/                   ← PERSONAL DATA (never touched by git)
+ ├── config.yaml                Your model, provider, stt, auxiliary settings
+ ├── .env                      Your API keys (GROQ_API_KEY, MODELOS_AI_KEY, etc.)
+ ├── auth.json                 Your OAuth tokens
+ ├── sessions/                 Your chat history
+ ├── state.db                  Your session database
+ ├── memories/                 Your agent memories
+ ├── skills/                   Your skills (36+ skills, outside repo)
+ ├── hooks/                    Your hooks
+ ├── SOUL.md                   Your persona
+ ├── patches/                  Overlay patches for upstream sync
+ │   ├── modelos-provider-v012.patch  The ONLY repo code change
+ │   └── README.md                How to apply patches after an update
+ ├── personal/                Your research, downloads, logs (.deb, etc.)
+ ├── custom-backup/           Archive of old fork code (safe to delete)
+ └── hermes-update.sh          One-command upstream sync script
+```
+
+### How to Update (one command)
+
+```bash
+bash ~/.hermes/hermes-update.sh
+```
+
+This script: fetches upstream → hard-resets to `upstream/main` → reinstalls
+dependencies → reapplies `~/.hermes/patches/modelos-provider-v012.patch` → pushes
+to origin. If the patch conflicts, it tells you and you manually re-add the
+modelos entries to `auth.py` and `models.py` (3 spots, 2-minute job).
+
+### What NOT to put in the repo
+
+Research documents, .deb packages, random logs, generated files — these go in
+`~/.hermes/personal/` or `~/obsidian-vault/`, NOT in the git repo. The repo
+is reset to upstream on every update; untracked files survive but clutter
+`git status`. The `.gitignore` excludes common offenders but the principle
+is: **the repo directory is source code only.**
+
+### The Modelos AI Provider (the only custom code)
+
+Three files need the Modelos additions. If a patch fails after an upstream
+sync, manually re-add these entries:
+
+| File | What to add |
+|------|-------------|
+| `hermes_cli/auth.py` | `ProviderConfig` entry for modelos + alias in `resolve_provider()` |
+| `hermes_cli/models.py` | Entry in `_PROVIDER_MODELS`, `CANONICAL_PROVIDERS`, `_PROVIDER_LABELS`, `_PROVIDER_ALIASES`, and live fetch in `provider_model_ids()` |
+
+See `~/.hermes/patches/README.md` for exact locations.
+
 ## Development Environment
 
 ```bash
