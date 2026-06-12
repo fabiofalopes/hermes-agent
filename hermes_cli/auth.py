@@ -423,6 +423,14 @@ PROVIDER_REGISTRY: Dict[str, ProviderConfig] = {
         api_key_env_vars=("OLLAMA_API_KEY",),
         base_url_env_var="OLLAMA_BASE_URL",
     ),
+    "modelos": ProviderConfig(
+        id="modelos",
+        name="Modelos AI",
+        auth_type="api_key",
+        inference_base_url="https://modelos.ai.ulusofona.pt/v1",
+        api_key_env_vars=("MODELOS_AI_KEY",),
+        base_url_env_var="MODELOS_AI_BASE_URL",
+    ),
     "bedrock": ProviderConfig(
         id="bedrock",
         name="AWS Bedrock",
@@ -1531,6 +1539,7 @@ def resolve_provider(
         "ollama": "custom", "ollama_cloud": "ollama-cloud",
         "vllm": "custom", "llamacpp": "custom",
         "llama.cpp": "custom", "llama-cpp": "custom",
+        "modelos": "modelos", "modelos.ai": "modelos",
     }
     # Extend with aliases declared in plugins/model-providers/<name>/ that aren't already mapped.
     # This keeps providers/ as the single source for new aliases while the

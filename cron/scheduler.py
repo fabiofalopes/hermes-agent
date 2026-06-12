@@ -889,7 +889,7 @@ def _get_script_timeout() -> int:
     return _DEFAULT_SCRIPT_TIMEOUT
 
 
-def _run_job_script(script_path: str) -> tuple[bool, str]:
+def _run_job_script(script_path: str, script_args: str = "") -> tuple[bool, str]:
     """Execute a cron job's data-collection script and capture its output.
 
     Scripts must reside within HERMES_HOME/scripts/.  Both relative and
@@ -911,6 +911,8 @@ def _run_job_script(script_path: str) -> tuple[bool, str]:
         script_path: Path to the script.  Relative paths are resolved
             against HERMES_HOME/scripts/.  Absolute and ~-prefixed paths
             are also validated to ensure they stay within the scripts dir.
+        script_args: Optional string of command-line arguments to pass
+            to the script (e.g. ``"--save-snapshot"``).
 
     Returns:
         (success, output) — on failure *output* contains the error message so the
@@ -966,6 +968,11 @@ def _run_job_script(script_path: str) -> tuple[bool, str]:
         argv = [_bash, str(path)]
     else:
         argv = [sys.executable, str(path)]
+
+    # Append script_args to the interpreter argv
+    if script_args:
+        import shlex
+        argv.extend(shlex.split(script_args))
 
     try:
         popen_kwargs = {"creationflags": windows_hide_flags()} if sys.platform == "win32" else {}
@@ -1053,11 +1060,12 @@ def _build_job_prompt(job: dict, prerun_script: Optional[tuple] = None) -> str:
 
     # Run data-collection script if configured, inject output as context.
     script_path = job.get("script")
+    script_args = job.get("script_args", "")
     if script_path:
         if prerun_script is not None:
             success, script_output = prerun_script
         else:
-            success, script_output = _run_job_script(script_path)
+            success, script_output = _run_job_script(script_path, script_args)
         if success:
             if script_output:
                 prompt = (
@@ -1439,8 +1447,9 @@ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
     # the script is only executed once.
     prerun_script = None
     script_path = job.get("script")
+    script_args = job.get("script_args", "")
     if script_path:
-        prerun_script = _run_job_script(script_path)
+        prerun_script = _run_job_script(script_path, script_args)
         _ran_ok, _script_output = prerun_script
         if _ran_ok and not _parse_wake_gate(_script_output):
             logger.info(

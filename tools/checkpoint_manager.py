@@ -104,6 +104,14 @@ DEFAULT_EXCLUDES = [
     ".git/",
     ".hg/",
     ".svn/",
+    # SSH (2026-06-01: never checkpoint SSH state — caused config rewrite bug)
+    ".ssh/",
+    ".ssh/**",
+    "authorized_keys",
+    "id_rsa",
+    "id_ed25519",
+    "id_ecdsa",
+    "*.pem",
     # Worktrees (Hermes convention — don't recursively snapshot siblings)
     ".worktrees/",
     # Native / compiled binaries
@@ -443,6 +451,8 @@ def _init_store(store: Path, working_dir: str) -> Optional[str]:
     _run_git(["config", "commit.gpgsign", "false"], store, cfg_wd)
     _run_git(["config", "tag.gpgSign", "false"], store, cfg_wd)
     _run_git(["config", "gc.auto", "0"], store, cfg_wd)
+    # Wire info/exclude so DEFAULT_EXCLUDES is honoured (2026-06-01)
+    _run_git(["config", "core.excludesFile", str(info_dir / "exclude")], store, cfg_wd)
 
     info_dir = store / "info"
     info_dir.mkdir(exist_ok=True)

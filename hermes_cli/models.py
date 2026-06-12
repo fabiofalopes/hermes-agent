@@ -193,6 +193,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     ],
     # Native OpenAI Chat Completions (api.openai.com). Used by /model counts and
     # provider_model_ids fallback when /v1/models is unavailable.
+    "modelos": [],
     "openai": [
         "gpt-5.4",
         "gpt-5.4-mini",
@@ -1021,6 +1022,7 @@ CANONICAL_PROVIDERS: list[ProviderEntry] = [
     ProviderEntry("kilocode",       "Kilo Code",                "Kilo Code (Kilo Gateway API)"),
     ProviderEntry("opencode-zen",   "OpenCode Zen",             "OpenCode Zen (Curated models, pay-as-you-go)"),
     ProviderEntry("opencode-go",    "OpenCode Go",              "OpenCode Go (Open models subscription)"),
+    ProviderEntry("modelos",        "Modelos AI",              "Modelos AI (university-hosted open models — modelos.ai.ulusofona.pt)"),
     ProviderEntry("bedrock",        "AWS Bedrock",              "AWS Bedrock (Claude, Nova, Llama, DeepSeek; IAM or API key)"),
     ProviderEntry("azure-foundry",  "Azure Foundry",            "Azure Foundry (OpenAI-style or Anthropic-style endpoint, your Azure AI deployment)"),
     ProviderEntry("qwen-oauth",     "Qwen OAuth (Portal)",      "Qwen OAuth (Reuses local Qwen CLI login)"),
@@ -2337,6 +2339,12 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
     except Exception:
         pass
 
+    if normalized == "modelos":
+        api_key = os.getenv("MODELOS_AI_KEY", "").strip()
+        if api_key:
+            live = fetch_api_models(api_key, "https://modelos.ai.ulusofona.pt/v1")
+            if live:
+                return live
     curated_static = list(_PROVIDER_MODELS.get(normalized, []))
     if normalized in _MODELS_DEV_PREFERRED:
         return _merge_with_models_dev(normalized, curated_static)
