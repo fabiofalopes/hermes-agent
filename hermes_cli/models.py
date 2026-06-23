@@ -372,6 +372,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "deepseek-v4-flash",
         "deepseek-v4-flash-free",
         "deepseek-v4-pro",
+        "glm-5.2",
         "grok-build-0.1",
         "mimo-v2.5-free",
         "minimax-m2.7",
