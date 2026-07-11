@@ -101,7 +101,7 @@ _DEFAULT_PROVIDER_MODELS = {
     "minimax": ["MiniMax-M2.7", "MiniMax-M2.5", "MiniMax-M2.1", "MiniMax-M2"],
     "minimax-cn": ["MiniMax-M2.7", "MiniMax-M2.5", "MiniMax-M2.1", "MiniMax-M2"],
     "kilocode": ["anthropic/claude-opus-4.6", "anthropic/claude-sonnet-4.6", "openai/gpt-5.4", "google/gemini-3-pro-preview", "google/gemini-3-flash-preview"],
-    "opencode-zen": ["big-pickle", "claude-sonnet-5", "deepseek-v4-flash", "deepseek-v4-flash-free", "deepseek-v4-pro", "glm-5.2", "grok-4.5", "grok-build-0.1", "hy3-free", "kimi-k2.7-code", "mimo-v2.5-free", "minimax-m2.7", "minimax-m3", "nemotron-3-ultra-free", "north-mini-code-free"],
+    "opencode-zen": ["big-pickle", "claude-sonnet-5", "deepseek-v4-flash", "deepseek-v4-flash-free", "deepseek-v4-pro", "glm-5.2", "gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "grok-4.5", "grok-build-0.1", "hy3-free", "kimi-k2.7-code", "mimo-v2.5-free", "minimax-m2.7", "minimax-m3", "nemotron-3-ultra-free", "north-mini-code-free"],
     "opencode-go": ["kimi-k2.6", "kimi-k2.5", "glm-5.1", "glm-5", "mimo-v2.5-pro", "mimo-v2.5", "mimo-v2-pro", "mimo-v2-omni", "minimax-m2.7", "minimax-m2.5", "qwen3.7-max", "qwen3.6-plus", "qwen3.5-plus"],
     "huggingface": [
         "Qwen/Qwen3.5-397B-A17B", "Qwen/Qwen3-235B-A22B-Thinking-2507",
