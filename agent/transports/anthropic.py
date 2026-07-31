@@ -9,6 +9,23 @@ from typing import Any, Dict, List, Optional
 from agent.transports.base import ProviderTransport
 from agent.transports.types import NormalizedResponse
 
+# Qwen models behind Anthropic-compatible shims sometimes emit
+# chain-of-thought as literal "<think>..." blocks
+# in TEXT content rather than as structured thinking blocks.
+# Extract them so they do not leak into visible output.
+_THINK_RE = __import__('re').compile(
+    r'<think>(.*?)</think>', __import__('re').DOTALL
+)
+
+def _split_embedded_thinking(text):
+    """Return (visible_text, [thinking_texts])."""
+    if '<think>' not in text:
+        return text, []
+    visible = _THINK_RE.sub('', text).strip()
+    thinking = [m.strip() for m in _THINK_RE.findall(text) if m.strip()]
+    return visible, thinking
+
+
 
 class AnthropicTransport(ProviderTransport):
     """Transport for api_mode='anthropic_messages'.
@@ -118,7 +135,11 @@ class AnthropicTransport(ProviderTransport):
                 if clean_block is not None:
                     ordered_blocks.append(clean_block)
             if block.type == "text":
-                text_parts.append(block.text)
+                _visible, _embedded = _split_embedded_thinking(block.text)
+                if _visible:
+                    text_parts.append(_visible)
+                if _embedded:
+                    reasoning_parts.extend(_embedded)
             elif block.type in ("thinking", "redacted_thinking"):
                 if block.type == "thinking":
                     reasoning_parts.append(block.thinking)
