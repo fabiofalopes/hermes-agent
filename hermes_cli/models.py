@@ -459,6 +459,8 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "kimi-k3",
         "laguna-s-2.1-free",
         "ling-3.0-flash-free",
+        "ling-3.0-tiny-free",
+        "longcat-2.0-free",
         "mimo-v2.5-free",
         "minimax-m2.7",
         "minimax-m3",
