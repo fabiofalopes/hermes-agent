@@ -442,6 +442,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     ],
     "opencode-zen": [
         "big-pickle",
+        "claude-fable-5-1",
         "claude-opus-5",
         "claude-sonnet-5",
         "deepseek-v4-flash",
